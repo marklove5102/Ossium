@@ -18,7 +18,7 @@ namespace Ossium
         Free();
     }
 
-    // Load material from file
+    // Load the shader program from file
     bool Shader::Load(std::string guid_path)
     {
         // Make sure memory is free first
@@ -55,13 +55,13 @@ namespace Ossium
         return bgfx::isValid(handle);
     }
 
-    // Initialise shaders
+    // Initialise shader
     bool Shader::Init()
     {
         return true;
     }
 
-    // Load and initialise the material
+    // Load and initialise the shader
     bool Shader::LoadAndInit(std::string guid_path)
     {
         return Load(guid_path) && Init();
@@ -112,6 +112,11 @@ namespace Ossium
                 Log.Error(error);
                 throw error.c_str();
         }
+    }
+
+    Shader::Type Shader::GetType()
+    {
+        return type;
     }
 
 }

@@ -14,6 +14,13 @@ namespace Ossium
     public:
         DECLARE_RESOURCE(Shader);
 
+        // What type of shader?
+        enum Type
+        {
+            Vertex = 0,
+            Fragment
+        };
+
         Shader() = default;
         virtual ~Shader();
 
@@ -35,8 +42,14 @@ namespace Ossium
         // Get the correct shader path according to the current rendering backend
         static std::string GetPath(std::string id);
 
+        // Get the shader type, e.g. fragment or vertex.
+        Type GetType();
+
     private:
         bgfx::ShaderHandle handle = BGFX_INVALID_HANDLE;
+
+        // What type of shader is this?
+        Type type = Type::Vertex;
 
     };
 

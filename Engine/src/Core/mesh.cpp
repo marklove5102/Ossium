@@ -81,6 +81,7 @@ namespace Ossium
             else if (keyword == "mtllib")
             {
                 // Load material(s) used by the mesh
+                
             }
             else
             {

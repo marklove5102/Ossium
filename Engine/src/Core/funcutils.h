@@ -48,12 +48,12 @@ namespace Ossium
 
         /// Turns an entire file at the given path into a string.
         OSSIUM_EDL std::string FileToString(std::string path);
-
+        
         /// Removes white space or some other specified character from both ends of a string
         OSSIUM_EDL std::string Strip(std::string data, char optionalChar = ' ');
 
-        /// Removes the filename from a path.
-        OSSIUM_EDL std::string StripFilename(std::string path);
+        /// Removes the filename from a path. Optionally remove the separator at the end too.
+        OSSIUM_EDL std::string StripFilename(std::string path, bool stripSeparator = false);
 
         /// Returns the file name from a path.
         OSSIUM_EDL std::string ExtractFilename(std::string path);

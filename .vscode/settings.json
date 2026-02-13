@@ -70,6 +70,8 @@
         "cinttypes": "cpp",
         "typeinfo": "cpp",
         "filesystem": "cpp",
-        "*.in": "cpp"
+        "*.in": "cpp",
+        "numbers": "cpp",
+        "semaphore": "cpp"
     }
 }

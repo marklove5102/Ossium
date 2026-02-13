@@ -153,13 +153,13 @@ namespace Ossium
             return data;
         }
 
-        string StripFilename(string path)
+        string StripFilename(string path, bool stripSeparator)
         {
             for (int i = path.size() - 1; i >= 0; i--)
             {
                 if (path[i] == '/' || path[i] == '\\')
                 {
-                    path = path.substr(0, i + 1);
+                    path = path.substr(0, i + (int)stripSeparator);
                     break;
                 }
             }

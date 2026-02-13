@@ -7,8 +7,40 @@ namespace Ossium
     
     REGISTER_RESOURCE(Material);
 
+    Material::~Material()
+    {
+        Free();
+    }
+
+    void Material::Free()
+    {
+        // Don't actually free the shaders as they will still exist in the resource controller and may still be used.
+        shaderFragment = nullptr;
+        shaderVertex = nullptr;
+        if (bgfx::isValid(shader))
+        {
+            bgfx::destroy(shader);
+            shader = BGFX_INVALID_HANDLE;
+        }
+    }
+
     bool Material::Load(std::string guid_path)
     {
+        Free();
+
+        // First, check if the path ends in .mtl or not. If not, assume a specific material name has been provided.
+        std::string mtlname = Utilities::ExtractFilename(guid_path);
+        std::string ext = Utilities::SplitRight(mtlname, '.', "", -1);
+        if (ext != "mtl" && ext != "MTL")
+        {
+            guid_path = Utilities::StripFilename(guid_path, true);
+            name = mtlname;
+        }
+        else
+        {
+            name = "";
+        }
+
         // Open the MTL file
         File mtl(guid_path);
         if (mtl.HasError())
@@ -21,88 +53,81 @@ namespace Ossium
         std::string keyword = mtl.ReadElement(' ');
         std::string element = "";
 
+        // Standard material properties
         Vector3 ambient;
         Vector3 diffuse;
         Vector3 specular;
         float dissolve;
+
+        // Parse the file
         while (!keyword.empty())
         {
-            if (keyword == "v")
+            if (keyword == "newmtl")
             {
-                for (unsigned int i = 0; i < 3; i++)
+                element = mtl.ReadElement(' ');
+                if (mtlname.empty())
                 {
-                    element = obj.ReadElement(' ');
-                    DEBUG_ASSERT(Utilities::IsNumber(element), "OBJ must have exactly 3 elements per v; ReadElement() result = {0}", element);
-                    vert(0, i) = Utilities::ToFloat(element);
+                    mtlname = element;
+                    name = element;
                 }
-                vertices.push_back(vert);
             }
-            else if (keyword == "vt")
+            else if (keyword == "Ka")
             {
-                for (unsigned int i = 0; i < 2; i++)
-                {
-                    element = obj.ReadElement(' ');
-                    DEBUG_ASSERT(Utilities::IsNumber(element), "OBJ must have exactly 2 elements per vt; ReadElement() result = {0}", element);
-                    uv(0, i) = Utilities::ToFloat(element);
-                }
-                texcoords.push_back(uv);
+                // todo: ambient
             }
-            else if (keyword == "vn")
+            else if (keyword == "Kd")
             {
-                for (unsigned int i = 0; i < 3; i++)
-                {
-                    element = obj.ReadElement(' ');
-                    DEBUG_ASSERT(Utilities::IsNumber(element), "OBJ must have exactly 3 elements per vn; ReadElement() result = {0}", element);
-                    norm(0, i) = Utilities::ToFloat(element);
-                }
-                normals.push_back(norm);
+                // todo: diffuse
             }
-            else if (keyword == "f")
+            else if (keyword == "Ks")
             {
-                std::vector<MeshFaceElement> face;
-                element = obj.ReadElement(' ');
-                while (!element.empty() && Utilities::IsInt(element.substr(0, 1)))
-                {
-                    auto indices = Utilities::Split(element, '/');
-                    Uint16 v = Utilities::ToInt(indices[0]);
-                    Uint16 vt = Utilities::ToInt(indices[1]);
-                    Uint16 vn = indices.size() > 2 ? Utilities::ToInt(indices[2]) : 0;
-                    face.push_back(MeshFaceElement(v, vt, vn));
-                    element = obj.ReadElement(' ');
-                }
-                faces.push_back(face);
-
-                // Skip to next iteration as the next keyword has been read already
-                keyword = element;
-                continue;
+                // todo: specular
             }
-            else if (keyword == "usemtl")
+            else if (keyword == "d")
             {
-            }
-            else if (keyword == "mtllib")
-            {
-                // Load material(s) used by the mesh
+                // todo: dissolve
             }
             else
             {
                 // Irrelevant data such as comments
+                // TODO: In future support different illumination models etc.
             }
             // Get the next keyword
-            keyword = obj.ReadElement(' ');
+            keyword = mtl.ReadElement(' ');
         }
         
         return true;
     }
 
-    bool Material::Init(ResourceController* resources)
+    bool Material::Init(ResourceController* resources, std::string shaderVertexPath, std::string shaderFragmentPath)
     {
-        // TODO
+        shaderVertex = resources->Get<Shader>(shaderVertexPath);
+        shaderFragment = resources->Get<Shader>(shaderFragmentPath);
+        shader = bgfx::createProgram(shaderVertex->GetHandle(), shaderFragment->GetHandle(), false);
         return true;
     }
 
-    bool Material::LoadAndInit(std::string guid_path, ResourceController* resources)
+    bool Material::LoadAndInit(std::string guid_path, ResourceController* resources, std::string vertexShaderPath, std::string fragmentShaderPath)
     {
-        return Load(guid_path) && Init(resources);
+        return Load(guid_path) && Init(resources, vertexShaderPath, fragmentShaderPath);
+    }
+
+    Shader* Material::GetShader(Shader::Type shaderType)
+    {
+        switch (shaderType)
+        {
+            case Shader::Type::Vertex:
+                return shaderVertex;
+            case Shader::Type::Fragment:
+                return shaderFragment;
+            default:
+                return nullptr;
+        }
+    }
+
+    std::string Material::GetName()
+    {
+        return name;
     }
 
 }
